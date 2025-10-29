@@ -76,6 +76,68 @@ Each decision should follow this format:
 - **Rationale**: [Why this is optimal for the specific context]
 - **Trade-offs**: [What we gain vs. what we sacrifice]
 
+**Design Token Implementation** (for UI features with Figma integration):
+If Figma design tokens were extracted, include a design decision documenting the token implementation strategy:
+
+**Example Decision**:
+- **Decision**: Design Token Implementation Strategy
+- **Context**: Figma design system defines colors, typography, spacing, and effects that must be consistently applied across UI components
+- **Alternatives**:
+  1. Hard-coded values in components (poor maintainability)
+  2. SASS/LESS variables (build-time only, no runtime access)
+  3. CSS Custom Properties with TypeScript types (hybrid approach)
+- **Selected Approach**: CSS Custom Properties (CSS Variables) with TypeScript type definitions
+  - Define tokens as CSS custom properties in `:root`
+  - Generate TypeScript const objects for type-safe access in JS/TS
+  - Use CSS-in-JS or utility classes to apply tokens
+- **Rationale**:
+  - CSS custom properties provide native browser support and CSS cascading
+  - TypeScript types ensure compile-time safety when accessing tokens in code
+  - Single source of truth: tokens defined once, used in both CSS and JS
+  - Runtime theming support (e.g., dark mode) through CSS variable updates
+- **Trade-offs**:
+  - Gain: Type safety, runtime flexibility, maintainability
+  - Sacrifice: Requires build step for token generation from Figma data
+
+**Token Structure** (example):
+```css
+/* Generated from Figma styles */
+:root {
+  /* Colors */
+  --color-primary-500: #3B82F6;
+  --color-neutral-100: #F3F4F6;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-md: 16px;
+
+  /* Typography */
+  --text-heading-h1-size: 32px;
+  --text-heading-h1-weight: 700;
+  --text-heading-h1-line-height: 40px;
+}
+```
+
+```typescript
+// Generated TypeScript types
+export const tokens = {
+  colors: {
+    primary: {
+      500: 'var(--color-primary-500)'
+    },
+    neutral: {
+      100: 'var(--color-neutral-100)'
+    }
+  },
+  spacing: {
+    xs: 'var(--spacing-xs)',
+    md: 'var(--spacing-md)'
+  }
+} as const;
+
+export type ColorToken = keyof typeof tokens.colors;
+```
+
 Skip this entire section for simple CRUD operations or when following established patterns without deviation.
 
 ## System Flows
@@ -113,9 +175,32 @@ Skip this section for simple features with straightforward 1:1 requirement-to-co
 Structure components by domain boundaries or architectural layers. Generate only relevant subsections based on component type.
 Group related components under domain/layer headings for clarity.
 
+**Figma Integration** (for UI components):
+If Figma discovery was executed, include "Figma Component Mapping" subsection for each UI component that maps to a Figma design.
+Map Figma component properties (variants, properties) to code component props with clear type definitions.
+
 ### [Domain/Layer Name]
 
 #### [Component Name]
+
+**Figma Component Mapping** (if applicable):
+- **Figma Component**: [Figma component name]
+- **Figma File**: [File name and key]
+- **Node ID**: [Node ID if specific frame/component]
+- **Variants**: [List of Figma variants]
+- **Property Mapping**:
+
+| Figma Property | Code Property | Type | Values | Default |
+|----------------|---------------|------|--------|---------|
+| Size | size | enum | 'sm' \| 'md' \| 'lg' | 'md' |
+| Variant | variant | enum | 'primary' \| 'secondary' | 'primary' |
+| State | disabled | boolean | true \| false | false |
+
+**Design Tokens Used**:
+- Colors: [e.g., `--color-primary-500`, `--color-neutral-100`]
+- Spacing: [e.g., `--spacing-md` for padding]
+- Typography: [e.g., `--text-button` for font style]
+- Effects: [e.g., `--shadow-sm` for box shadow]
 
 **Responsibility & Boundaries**
 - **Primary Responsibility**: Single, clear statement of what this component does
@@ -188,6 +273,52 @@ With detailed schemas only for complex payloads
 **Data Model Generation Instructions** (DO NOT include this section in design.md):
 Generate only relevant data model sections based on the system's data requirements and chosen architecture.
 Progress from conceptual to physical as needed for implementation clarity.
+
+**Figma Integration** (for UI features):
+If Figma discovery was executed and prototypes were analyzed, include "UI State Model (from Figma)" subsection.
+This captures state management requirements derived from Figma prototype interactions.
+
+### UI State Model (from Figma)
+**When to include**: UI features with Figma prototypes showing interactive states, modals, navigation, or form flows
+
+**State Definitions**:
+Define TypeScript interfaces or equivalent for UI state derived from Figma prototype analysis.
+
+**Example Structure**:
+```typescript
+// Modal State (from Figma modal interactions)
+interface ModalState {
+  isOpen: boolean;
+  modalType: 'confirmation' | 'form' | 'alert';
+  content: ModalContent | null;
+}
+
+// Navigation State (from Figma navigation flows)
+interface NavigationState {
+  activeTab: 'dashboard' | 'analytics' | 'settings';
+  breadcrumbs: Breadcrumb[];
+  sidebarCollapsed: boolean;
+}
+
+// Form State (from Figma form prototypes)
+interface FormState {
+  values: Record<string, any>;
+  errors: Record<string, string>;
+  touched: Record<string, boolean>;
+  isSubmitting: boolean;
+  validationState: 'idle' | 'validating' | 'valid' | 'invalid';
+}
+```
+
+**State Transitions**:
+Document key state transitions observed in Figma prototypes:
+- Trigger events (e.g., button click, input change)
+- Resulting state changes
+- Side effects (API calls, animations)
+
+**Figma Prototype References**:
+- Link to specific Figma prototype flows
+- Frame IDs for key interaction screens
 
 ### Domain Model
 **When to include**: Complex business domains with rich behavior and rules

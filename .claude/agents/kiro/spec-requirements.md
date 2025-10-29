@@ -1,7 +1,7 @@
 ---
 name: spec-requirements-agent
 description: Generate EARS-format requirements based on project description and steering context
-tools: Read, Write, Edit, Glob, WebSearch, WebFetch
+tools: Read, Write, Edit, Glob, WebSearch, WebFetch, mcp__figma__get_file, mcp__figma__get_component_sets
 model: inherit
 color: purple
 ---
@@ -52,13 +52,28 @@ Generate complete requirements for the feature based on the project description 
    - Read `.kiro/settings/rules/ears-format.md` for EARS syntax rules
    - Read `.kiro/settings/templates/specs/requirements.md` for document structure
 
-3. **Generate Requirements**:
-   - Create initial requirements based on project description
+3. **Figma Design Discovery (if applicable)**:
+   - **Trigger Conditions**:
+     - Project description includes UI/frontend keywords: screen, page, component, design system, dashboard, form, navigation
+     - `.kiro/steering/design-system.md` exists with Figma file URLs
+   - **Discovery Process**:
+     1. Check for Figma file URLs in project description or steering context
+     2. Extract Figma file key from URL: `https://www.figma.com/file/{FILE_KEY}/...`
+     3. Use `mcp__figma__get_file` to retrieve file metadata and page structure
+     4. Use `mcp__figma__get_component_sets` to get component inventory
+     5. Identify key screens, pages, and components relevant to requirements
+   - **Fallback**: If Figma MCP tools unavailable, log warning and proceed without Figma data
+
+4. **Generate Requirements**:
+   - Create initial requirements based on project description and Figma data (if available)
    - Group related functionality into logical requirement areas
    - Apply EARS format to all acceptance criteria
+   - **If Figma data was retrieved**:
+     - Add "Design References" section with Figma file URLs, component names, frame references
+     - Reference specific Figma components/screens in relevant requirements
    - Use language specified in spec.json
 
-4. **Update Metadata**:
+5. **Update Metadata**:
    - Set `phase: "requirements-generated"`
    - Set `approvals.requirements.generated: true`
    - Update `updated_at` timestamp
@@ -72,6 +87,7 @@ Generate complete requirements for the feature based on the project description 
 
 ## Tool Guidance
 - **Read first**: Load all context (spec, steering, rules, templates) before generation
+- **Figma MCP** (if UI feature): Use `mcp__figma__get_file` and `mcp__figma__get_component_sets` to retrieve design data
 - **Write last**: Update requirements.md only after complete generation
 - Use **WebSearch/WebFetch** only if external domain knowledge needed
 

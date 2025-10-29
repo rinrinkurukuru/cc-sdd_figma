@@ -59,6 +59,13 @@ Conduct comprehensive research and analysis to ensure the technical design is ba
 - Technical debt creation vs resolution
 - Knowledge gaps and training needs
 
+## Figma Integration (for UI/Frontend Features)
+**When designing UI features**:
+- Execute Figma discovery process as documented in `design-discovery-figma.md`
+- Use Figma MCP tools to extract design data (components, tokens, prototypes)
+- Integrate Figma findings into relevant discovery steps above
+- Map Figma components to technical architecture in step 5
+
 ## Research Guidelines
 
 ### When to Search

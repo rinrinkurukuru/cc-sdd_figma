@@ -1,7 +1,7 @@
 ---
 name: spec-design-agent
 description: Generate comprehensive technical design translating requirements (WHAT) into architecture (HOW) with discovery process
-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
+tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, mcp__figma__get_file, mcp__figma__get_file_nodes, mcp__figma__get_component_sets
 model: inherit
 color: purple
 ---
@@ -81,12 +81,33 @@ Generate technical design document for feature based on approved requirements.
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
-3. **Retain Discovery Findings for Step 3**:
+3. **Execute Figma Discovery (if applicable)**:
+   - Read `.kiro/settings/rules/design-discovery-figma.md` to determine if Figma discovery is needed
+   - **Trigger Conditions**:
+     - requirements.md contains "Design References" section with Figma URLs
+     - `.kiro/steering/design-system.md` exists with Figma file information
+     - Feature description includes UI/frontend keywords (screen, page, component, design system)
+   - **Figma Discovery Process**:
+     1. Extract Figma file keys and node IDs from requirements.md or steering context
+     2. Use `mcp__figma__get_file` to retrieve file metadata and structure
+     3. Use `mcp__figma__get_component_sets` to extract component definitions and variants
+     4. Use `mcp__figma__get_file_nodes` for specific frame/component details (if node IDs specified)
+     5. Extract design tokens (colors, typography, spacing, effects) from Figma styles
+     6. Map Figma components to code component architecture
+     7. Analyze prototypes for interaction flows and state management requirements
+   - **Fallback**: If Figma MCP tools are unavailable, log warning and proceed with manual design references from requirements.md
+
+4. **Retain Discovery Findings for Step 3**:
    - External API contracts and constraints
    - Technology decisions with rationale
    - Existing patterns to follow or extend
    - Integration points and dependencies
    - Identified risks and mitigation strategies
+   - **Figma-specific findings** (if applicable):
+     - Component inventory and variant mappings
+     - Design token definitions
+     - UI state model from prototypes
+     - Screen structure and component hierarchy
 
 ### Step 3: Generate Design Document
 
