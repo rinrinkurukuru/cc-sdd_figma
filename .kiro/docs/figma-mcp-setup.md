@@ -11,88 +11,27 @@ Figma MCPを統合することで、以下が可能になります：
 
 ---
 
-## 2つのセットアップ方法
+## 推奨セットアップ方法
 
-Figma MCPには2つのセットアップ方法があります。プロジェクトの要件に応じて選択してください。
+**Framelink MCP for Figma（推奨）**
 
-| 方法 | メリット | デメリット | 推奨ケース |
-|------|---------|-----------|-----------|
-| **方法A: Figma公式Dev Mode MCP** | アクセストークン不要、公式サポート、セットアップ簡単 | Professional以上のプラン必須、Dev Mode機能に特化 | 有料プラン利用者、Dev Mode中心のワークフロー |
-| **方法B: Community Figma MCP** | 全プラン対応、すべてのFigmaファイルにアクセス可能 | アクセストークン必要、npmインストール必要 | 無料プラン利用者、幅広いAPI機能が必要 |
+GLipsが開発した`figma-developer-mcp`パッケージを使用します。このMCPサーバーは：
+- すべてのFigmaプラン（無料版含む）で動作
+- FigmaファイルURLを直接渡すだけで情報取得可能
+- AI向けに最適化された簡潔なレスポンス
+- WSL環境での動作確認済み
 
----
-
-## 方法A: Figma公式Dev Mode MCP Server（推奨）
-
-### 前提条件
-- Figma Professional、Business、またはEnterpriseプラン
-- Dev または Full seat
-- Claude Code がインストールされていること
-- Figma Desktop アプリ（最新版）
-
-### ステップ1: Figma DesktopでMCPサーバーを有効化
-
-1. **Figma Desktopアプリを開く**
-2. **Figmaメニューを開く**（画面左上）
-3. **Preferences（環境設定）を選択**
-4. **"Enable Dev Mode MCP Server" を有効化**
-
-画面下部に以下のメッセージが表示されます：
-```
-Server enabled and running at http://127.0.0.1:3845/sse
-```
-
-### ステップ2: Claude Code MCP設定
-
-以下のコマンドでMCPサーバーを追加：
-
-```bash
-claude mcp add --transport sse figma-dev-mode-mcp-server http://127.0.0.1:3845/sse
-```
-
-**または、設定ファイルを直接編集:**
-
-**Linux/macOS:** `~/.config/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "figma-dev-mode": {
-      "url": "http://127.0.0.1:3845/sse"
-    }
-  }
-}
-```
-
-### ステップ3: 動作確認
-
-1. Claude Codeを再起動
-2. `/tools` コマンドを実行
-3. 以下のツールが表示されることを確認：
-   - `mcp__figma-dev-mode__get_code`
-   - `mcp__figma-dev-mode__get_variable_defs`
-   - `mcp__figma-dev-mode__get_code_connect_map`
-   - `mcp__figma-dev-mode__get_image`
-
-### 使い方
-
-**選択ベース:**
-1. Figma Desktopでフレームを選択
-2. Claude Codeで「選択したフレームを実装してください」と指示
-
-**リンクベース:**
-1. Figmaでフレームリンクをコピー
-2. Claude CodeにURLを渡して「このデザインを実装してください」と指示
+参考: https://github.com/GLips/Figma-Context-MCP
 
 ---
 
-## 方法B: Community Figma MCP Server
+## セットアップ手順
 
 ### 前提条件
 - Figmaアカウント（無料プランでも可）
-- Claude Code がインストールされていること
-- Node.js 18以上
+- Claude Codeがインストールされていること
+- Node.js および npm がインストール済みであること
+  - `node --version` および `npx --version` で確認可能
 
 ### ステップ1: Figma Personal Access Tokenの取得
 
@@ -102,109 +41,200 @@ claude mcp add --transport sse figma-dev-mode-mcp-server http://127.0.0.1:3845/s
    - 「Settings」を選択
 3. **Personal Access Token を生成**:
    - 左メニューから「Personal access tokens」を選択
-   - 「Generate new token」をクリック
+   - 「Create new token」をクリック
    - トークン名を入力（例: `cc-sdd-mcp`）
-   - 必要な権限を選択:
-     - ✅ File content (read)
-     - ✅ File metadata (read)
    - 「Generate token」をクリック
 4. **トークンをコピー**:
    - 生成されたトークンをコピーして安全な場所に保存
    - ⚠️ このトークンは一度しか表示されません
 
-### ステップ2: Figma MCP Serverのインストール
+**参考**: [Figma公式ドキュメント - Personal Access Tokens](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens)
 
-```bash
-npm install -g @modelcontextprotocol/server-figma
-```
+### ステップ2: プロジェクトのMCP設定ファイルを編集
 
-### ステップ3: Claude Code MCP設定
+**プロジェクトルートの`.mcp.json`を編集します。**
 
-**Linux/macOS:** `~/.config/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+1. **設定ファイルを開く**:
+   ```bash
+   # プロジェクトルートの .mcp.json を編集
+   code .mcp.json
+   # または
+   vi .mcp.json
+   ```
 
+2. **トークンを書き換える**:
+   ```json
+   {
+     "mcpServers": {
+       "figma-framelink": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "figma-developer-mcp",
+           "--figma-api-key=$FIGMA_PERSONAL_ACCESS_TOKEN",
+           "--stdio"
+         ]
+       }
+     }
+   }
+   ```
+
+   **`$FIGMA_PERSONAL_ACCESS_TOKEN`の部分を、ステップ1で取得した実際のトークンに置き換えてください:**
+   ```json
+   "--figma-api-key=figd_xxxxxxxxxxxxxxxxxxxx",
+   ```
+
+   **重要**:
+   - `$FIGMA_PERSONAL_ACCESS_TOKEN` の部分を実際のトークン文字列に置き換える
+   - トークンは `figd_` で始まる形式
+   - ダブルクォートを削除しないように注意
+
+**編集例（置き換え前）**:
 ```json
-{
-  "mcpServers": {
-    "figma": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-figma"
-      ],
-      "env": {
-        "FIGMA_PERSONAL_ACCESS_TOKEN": "YOUR_FIGMA_TOKEN_HERE"
-      }
-    }
-  }
-}
+"--figma-api-key=$FIGMA_PERSONAL_ACCESS_TOKEN",
 ```
 
-**重要**: `YOUR_FIGMA_TOKEN_HERE` をステップ1で取得したトークンに置き換えてください。
+**編集例（置き換え後）**:
+```json
+"--figma-api-key=figd_AbCdEf1234567890XyZ_abcdefgh12345678",
+```
+
+3. **ファイルを保存**:
+   - VS Code: `Ctrl + S`
+   - vi/vim: `:wq`
+
+### ステップ3: Claude Codeを起動
+
+1. **Claude Codeを起動**:
+   ```bash
+   claude code
+   ```
+
+   Claude Codeが`.mcp.json`を読み込み、Figma MCPサーバーを自動的に起動します
 
 ### ステップ4: 動作確認
 
-1. Claude Codeを再起動
-2. `/tools` コマンドを実行
-3. 以下のツールが表示されることを確認：
-   - `mcp__figma__get_file`
-   - `mcp__figma__get_file_nodes`
-   - `mcp__figma__get_component_sets`
+**方法1: MCPサーバーの状態を確認（推奨）**
+
+Claude Code内で以下を入力：
+```
+/mcp
+```
+
+これにより、接続されているMCPサーバーの一覧が表示されます。`figma-framelink`が表示されていれば設定成功です。
+
+**方法2: 実際にFigmaファイルURLでテスト**
+
+```
+Figmaファイル https://www.figma.com/design/abc123/MyProject からコンポーネント情報を取得してください
+```
+
+成功すると、Figmaファイルの情報（コンポーネント、スタイル、ページ構造など）が返されます。
 
 ### 使い方
 
-**FigmaファイルキーとノードIDの確認:**
+**FigmaファイルのURLを直接渡す:**
 
 FigmaファイルのURLは以下の形式です：
 ```
+https://www.figma.com/design/{FILE_KEY}/{FILE_NAME}
 https://www.figma.com/file/{FILE_KEY}/{FILE_NAME}?node-id={NODE_ID}
 ```
 
 **例:**
 ```
-https://www.figma.com/file/abc123def456/MyDesignSystem?node-id=10%3A234
+このFigmaデザインを実装してください: https://www.figma.com/design/abc123def456/MyDesignSystem
 ```
-- **FILE_KEY**: `abc123def456`
-- **NODE_ID**: `10:234`
 
-**テスト実行:**
-```
-FigmaファイルURL https://www.figma.com/file/abc123def456/MyDesignSystem からコンポーネント情報を取得してください
-```
+MCPサーバーがURL内のファイルキーやノードIDを自動的に抽出して、Figma APIから情報を取得します。
 
 ---
 
 ## トラブルシューティング
 
-### 共通の問題
+### MCPツールが表示されない
 
-**MCPツールが表示されない:**
-1. 設定ファイルのパスを再確認
-2. JSON構文エラーをチェック
-3. Claude Codeを完全に再起動（プロセスを終了してから起動）
+**1. 設定ファイルが存在するか確認**
+```bash
+# プロジェクトルートに .mcp.json が存在するか確認
+ls -la .mcp.json
+```
 
-### 方法A（Dev Mode MCP）固有
+**2. JSON構文エラーをチェック**
+```bash
+# JSONの構文が正しいかチェック
+cat .mcp.json | jq .
+# エラーが出る場合は構文エラーがあります
+```
 
-**サーバーが起動しない:**
-- Figma Desktopアプリが最新版か確認
-- Figma Desktopが起動しているか確認
-- Professional以上のプランか確認
+**3. トークンの置き換えを確認**
+```bash
+# .mcp.json の内容を確認
+cat .mcp.json
+# "--figma-api-key=$FIGMA_PERSONAL_ACCESS_TOKEN" のままになっていないか確認
+# 実際のトークン（figd_ で始まる文字列）に置き換わっているか確認
+```
 
-**接続できない:**
-- `http://127.0.0.1:3845/sse` が正しく設定されているか確認
-- ファイアウォールがローカルホストをブロックしていないか確認
+**4. Claude Codeを再起動**
+```bash
+# Claude Codeを終了してから再起動
+claude code
+```
 
-### 方法B（Community MCP）固有
+### "Authentication failed" エラー
 
-**"Authentication failed" エラー:**
+**トークンを確認:**
 - Personal Access Tokenが有効か確認
-- 設定ファイルのトークンが正しいか確認
-- Claude Codeを再起動
+- トークンの形式: `figd_` で始まる文字列
+- `.mcp.json`内のトークンが正しいか再確認
+- Figmaの設定ページでトークンが無効化されていないか確認
 
-**"File not found" エラー:**
-- FigmaファイルキーまたはノードIDが正しいか確認
-- トークンに該当ファイルへのアクセス権限があるか確認
-- Figmaでファイルにアクセスできることを確認
+**トークンを再生成:**
+1. Figmaの設定ページで古いトークンを削除
+2. 新しいトークンを生成（ステップ1を参照）
+3. `.mcp.json`を開いて`--figma-api-key=`の部分を新しいトークンに更新
+4. Claude Codeを再起動
+
+### "File not found" エラー
+
+**Figmaファイルへのアクセス権を確認:**
+- Figma Web版で該当ファイルを開けるか確認
+- ファイルが共有されているか、自分のアカウントでアクセス可能か確認
+
+**URLの形式を確認:**
+```
+正しい形式:
+https://www.figma.com/design/abc123/ProjectName
+https://www.figma.com/file/abc123/ProjectName
+
+間違った形式:
+https://figma.com/design/abc123/ProjectName (www が抜けている)
+```
+
+### npxコマンドが見つからない
+
+**Node.jsがインストールされているか確認:**
+```bash
+# Node.jsとnpxのバージョン確認
+node --version
+npx --version
+
+# インストールされていない場合はNode.jsをインストール
+# 例: Ubuntu/Debian
+sudo apt update
+sudo apt install nodejs npm
+```
+
+### .mcp.json が読み込まれない
+
+**Claude Codeの起動ディレクトリを確認:**
+```bash
+# .mcp.json が存在するディレクトリでClaude Codeを起動
+cd /path/to/project
+claude code
+```
+
+Claude Codeは起動時にカレントディレクトリの`.mcp.json`を読み込みます。プロジェクトルートで起動していることを確認してください。
 
 ---
 
@@ -236,16 +266,32 @@ Figma MCPの設定が完了したら、以下のcc-sddワークフローでFigma
 
 ## 参考リンク
 
-**方法A（Dev Mode MCP）:**
-- [Figma Dev Mode MCP公式ガイド](https://help.figma.com/hc/ja/articles/32132100833559)
+**Framelink MCP for Figma:**
+- [GitHubリポジトリ](https://github.com/GLips/Figma-Context-MCP)
+- [Framelink公式ドキュメント](https://www.framelink.ai/docs/quickstart)
+- [npmパッケージ](https://www.npmjs.com/package/figma-developer-mcp)
 
-**方法B（Community MCP）:**
+**Figma API:**
 - [Figma API Documentation](https://www.figma.com/developers/api)
-- [MCP Figma Server GitHub](https://github.com/modelcontextprotocol/servers/tree/main/src/figma)
+- [Personal Access Tokens管理](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens)
 
-**共通:**
-- [Model Context Protocol (MCP) Documentation](https://github.com/modelcontextprotocol/specification)
+**Model Context Protocol:**
+- [MCP公式ドキュメント](https://github.com/modelcontextprotocol/specification)
 
 ---
 
-**最終更新**: 2025-10-29
+## 追加情報: その他のFigma MCP選択肢
+
+参考までに、他のFigma MCP実装も存在します（本ドキュメントでは推奨しませんが、特定の要件がある場合は検討してください）：
+
+### Figma公式Dev Mode MCP
+- **前提**: Figma Professional以上のプラン、Dev Mode機能
+- **特徴**: Figma Desktopアプリと連携、トークン不要
+- **制限**: 無料プランでは利用不可
+
+### Anthropic公式 MCP Figma Server
+- **パッケージ**: `@modelcontextprotocol/server-figma`
+- **特徴**: Anthropic公式実装
+- **制限**: 機能がシンプル、レスポンスが冗長
+
+WSL環境での動作実績と使いやすさから、本ドキュメントでは **Framelink MCP for Figma** を推奨しています。
